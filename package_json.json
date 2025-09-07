@@ -1,0 +1,25 @@
+{
+  "name": "khangxplayto-discord-bot",
+  "version": "1.0.0",
+  "description": "Discord bot with Gemini AI integration",
+  "main": "bot.js",
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "node bot.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.14.1",
+    "@google/generative-ai": "^0.7.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "discord",
+    "bot",
+    "gemini",
+    "ai"
+  ],
+  "author": "Khangxplayto",
+  "license": "MIT"
+}
