@@ -89,8 +89,26 @@ client.on('interactionCreate', async interaction => {
 client.on('error', console.error);
 process.on('unhandledRejection', console.error);
 
+// Thêm HTTP server cho Render
+const http = require('http');
+const PORT = process.env.PORT || 3000;
+
+const server = http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Bot is running!');
+});
+
+server.listen(PORT, () => {
+    console.log(`HTTP server running on port ${PORT}`);
+});
+
 // Khởi động bot
 async function startBot() {
+    await deployCommands();
+    await client.login(DISCORD_TOKEN);
+}
+
+startBot().catch(console.error);
     await deployCommands();
     await client.login(DISCORD_TOKEN);
 }
