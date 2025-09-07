@@ -1,10 +1,13 @@
+
 const { Client, GatewayIntentBits, SlashCommandBuilder, REST, Routes } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const http = require('http');
 
 // Cấu hình từ environment variables
 const DISCORD_TOKEN = process.env.DISCORD_TOKEN;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const CLIENT_ID = process.env.CLIENT_ID;
+const PORT = process.env.PORT || 3000;
 
 // Khởi tạo clients
 const client = new Client({
@@ -45,7 +48,7 @@ async function deployCommands() {
 }
 
 // Event handlers
-client.once('ready', () => {
+client.once('clientReady', () => {
     console.log(`Bot ${client.user.tag} đã online!`);
     client.user.setActivity('Chat với Gemini AI', { type: 'PLAYING' });
 });
@@ -89,10 +92,7 @@ client.on('interactionCreate', async interaction => {
 client.on('error', console.error);
 process.on('unhandledRejection', console.error);
 
-// Thêm HTTP server cho Render
-const http = require('http');
-const PORT = process.env.PORT || 3000;
-
+// HTTP server cho Render
 const server = http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('Bot is running!');
@@ -104,11 +104,6 @@ server.listen(PORT, () => {
 
 // Khởi động bot
 async function startBot() {
-    await deployCommands();
-    await client.login(DISCORD_TOKEN);
-}
-
-startBot().catch(console.error);
     await deployCommands();
     await client.login(DISCORD_TOKEN);
 }
