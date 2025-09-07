@@ -1,4 +1,3 @@
-
 const { Client, GatewayIntentBits, SlashCommandBuilder, REST, Routes } = require('discord.js');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const http = require('http');
@@ -56,35 +55,105 @@ client.once('clientReady', () => {
 client.on('interactionCreate', async interaction => {
     if (!interaction.isChatInputCommand()) return;
 
-    if (interaction.commandName === 'bot') {
-        const question = interaction.options.getString('question');
-        
-        // Defer reply để có thời gian xử lý
-        await interaction.deferReply();
+    const command = interaction.commandName;
+    await interaction.deferReply();
 
-        try {
-            // Gọi Gemini API
-            const prompt = `Trả lời câu hỏi sau một cách thân thiện và hữu ích: ${question}`;
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
+    try {
+        let prompt = '';
+        let result;
 
-            // Chia nhỏ response nếu quá dài (Discord giới hạn 2000 ký tự)
-            if (text.length > 2000) {
-                const chunks = text.match(/.{1,2000}/g);
-                await interaction.editReply(chunks[0]);
+        switch (command) {
+            case 'bot':
+                const question = interaction.options.getString('question');
+                prompt = `Trả lời câu hỏi sau một cách thân thiện và hữu ích: ${question}`;
+                break;
+
+            case 'translate':
+                const textToTranslate = interaction.options.getString('text');
+                const targetLang = interaction.options.getString('to');
+                prompt = `Dịch văn bản sau sang ${targetLang}: "${textToTranslate}"`;
+                break;
+
+            case 'summarize':
+                const textToSummarize = interaction.options.getString('text');
+                prompt = `Tóm tắt văn bản sau một cách súc tích và dễ hiểu:\n\n${textToSummarize}`;
+                break;
+
+            case 'code':
+                const code = interaction.options.getString('code');
+                const action = interaction.options.getString('action');
                 
-                for (let i = 1; i < chunks.length; i++) {
-                    await interaction.followUp(chunks[i]);
+                switch (action) {
+                    case 'explain':
+                        prompt = `Giải thích đoạn code sau một cách chi tiết:\n\`\`\`\n${code}\n\`\`\``;
+                        break;
+                    case 'debug':
+                        prompt = `Tìm lỗi và đề xuất sửa cho đoạn code sau:\n\`\`\`\n${code}\n\`\`\``;
+                        break;
+                    case 'optimize':
+                        prompt = `Tối ưu hóa đoạn code sau:\n\`\`\`\n${code}\n\`\`\``;
+                        break;
                 }
-            } else {
-                await interaction.editReply(text);
-            }
+                break;
 
-        } catch (error) {
-            console.error('Lỗi khi gọi Gemini:', error);
-            await interaction.editReply('❌ Xin lỗi, tôi gặp lỗi khi xử lý câu hỏi của bạn. Vui lòng thử lại sau!');
+            case 'creative':
+                const creativeType = interaction.options.getString('type');
+                const topic = interaction.options.getString('topic');
+                
+                switch (creativeType) {
+                    case 'poem':
+                        prompt = `Viết một bài thơ về chủ đề: ${topic}`;
+                        break;
+                    case 'story':
+                        prompt = `Viết một truyện ngắn về: ${topic}`;
+                        break;
+                    case 'email':
+                        prompt = `Viết một email chuyên nghiệp về: ${topic}`;
+                        break;
+                    case 'article':
+                        prompt = `Viết một bài viết về chủ đề: ${topic}`;
+                        break;
+                }
+                break;
+
+            case 'analyze':
+                const textToAnalyze = interaction.options.getString('text');
+                const analysisType = interaction.options.getString('type');
+                
+                switch (analysisType) {
+                    case 'sentiment':
+                        prompt = `Phân tích cảm xúc của văn bản sau (tích cực/tiêu cực/trung tính): "${textToAnalyze}"`;
+                        break;
+                    case 'keywords':
+                        prompt = `Trích xuất từ khóa chính từ văn bản sau: "${textToAnalyze}"`;
+                        break;
+                    case 'topic':
+                        prompt = `Xác định chủ đề chính của văn bản sau: "${textToAnalyze}"`;
+                        break;
+                }
+                break;
         }
+
+        // Gọi Gemini API
+        result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+
+        // Chia nhỏ response nếu quá dài
+        if (text.length > 2000) {
+            const chunks = text.match(/.{1,2000}/g);
+            await interaction.editReply(chunks[0]);
+            
+            for (let i = 1; i < chunks.length; i++) {
+                await interaction.followUp(chunks[i]);
+            }
+        } else {
+            await interaction.editReply(text);
+        }
+
+    } catch (error) {
+        console.error('Lỗi khi gọi Gemini:', error);
+        await interaction.editReply('❌ Xin lỗi, tôi gặp lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại sau!');
     }
 });
 
